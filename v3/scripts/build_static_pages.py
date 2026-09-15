@@ -26,12 +26,36 @@ FOOTER = """<footer class="site-footer">
   </div>
 </footer>""".format(site_name=cfg["siteName"])
 
+# Kept as a plain string (not a .format() template) so the snippet's own
+# JS braces never need escaping. Install once per page only — do not
+# duplicate this block. No Purchase event: Lemon Squeezy handles that.
+META_PIXEL = """<!-- Meta Pixel Code (install once per page only — do not duplicate) -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '900057212984616');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=900057212984616&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->"""
+
 def page(title, description, body):
     return """<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+{pixel}
+
 <title>{title}</title>
 <meta name="description" content="{description}">
 <meta name="robots" content="noindex,follow">
@@ -46,7 +70,7 @@ def page(title, description, body):
 {footer}
 </body>
 </html>
-""".format(title=title, description=description, nav=NAV, footer=FOOTER, body=body)
+""".format(title=title, description=description, nav=NAV, footer=FOOTER, body=body, pixel=META_PIXEL)
 
 privacy_body = """<div class="legal-content">
   <h1>Privacy Policy</h1>

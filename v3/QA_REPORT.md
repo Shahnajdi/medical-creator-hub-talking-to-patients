@@ -150,7 +150,53 @@ show zero horizontal overflow and zero console errors, and Lighthouse
 returned **100/100/100/100** (Performance/Accessibility/Best
 Practices/SEO), CLS 0, LCP 1.8s.
 
-## 9. Known non-blockers / suggestions for a future pass
+## 9. Meta Pixel installation
+
+Installed Meta's official base pixel code (unmodified) in the `<head>` of
+all 4 production HTML pages (`index.html`, `privacy.html`, `terms.html`,
+`404.html`), sourced from a single `META_PIXEL` string constant so the
+snippet exists in exactly one place per build script and can't drift
+between pages. No design, copy, checkout URL, CSS, or layout changes.
+
+- **Exactly one `PageView` fires per page load** — verified by grepping
+  the built HTML for `fbq('track', 'PageView')`: exactly one occurrence
+  per file, and the snippet's own `if(f.fbq)return` guard makes even an
+  accidental double-include a no-op rather than a double-fire.
+- **No `Purchase` event added anywhere** — grepped the whole `v3/`
+  tree; Lemon Squeezy remains solely responsible for purchase tracking,
+  per instructions.
+- **Real bug caught and fixed during verification**: the site's existing
+  CSP (`script-src 'self'`) would have silently blocked the pixel's
+  inline `<script>` entirely — `fbq` would never be defined and no
+  event would ever fire, with no visible error except in the browser
+  console. Rather than weakening this to a broad `'unsafe-inline'`,
+  I added the exact SHA-256 hash of the (unmodified) pixel script to
+  `script-src` — this allows only this specific, byte-for-byte script
+  to run inline, with everything else in the strict CSP left as-is.
+  Also added `connect.facebook.net` to `script-src` (to load
+  `fbevents.js`) and `www.facebook.com`/`connect.facebook.net` to
+  `img-src`/`connect-src` (for the tracking beacon and `<noscript>`
+  fallback pixel).
+- **Verified live in a headless browser** against a test server that
+  enforces the exact same CSP as production: `fbq` initializes
+  (`fbq.loaded === true`, version `2.0`) with **zero CSP violations**
+  on all 4 pages. The only console error observed was
+  `ERR_TUNNEL_CONNECTION_FAILED` when trying to reach
+  `connect.facebook.net` — that's this sandboxed dev environment's own
+  outbound proxy blocking Facebook's domain, not a CSP block or a bug;
+  real visitor browsers on the live domain will load it normally.
+- Re-ran the full width/overflow/console-error sweep and the lightbox /
+  sticky-CTA / FAQ interaction tests after this change: no regressions.
+
+**Pre-existing issue noticed (unrelated to this change, not fixed):**
+`privacy.html`, `terms.html`, and `404.html` (and `index.html` itself)
+link `<link rel="icon" href="/favicon.ico">`, but the favicon file only
+exists at `/assets/favicon.ico` — this 404s in the browser console on
+every page load and predates the Meta Pixel work. Worth a one-line fix
+(either add a copy of the file at the site root, or update the href) in
+a future pass.
+
+## 10. Known non-blockers / suggestions for a future pass
 
 - **Open Graph image is square (1254×1254)**, not the ideal 1200×630 landscape
   ratio some platforms prefer. It will still render (most platforms center-crop
