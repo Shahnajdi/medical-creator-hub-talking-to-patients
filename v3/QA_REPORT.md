@@ -108,7 +108,49 @@ long-lived cache lifetimes for `/assets/*`, `.jpg`, and `.webp`.
    is still used for text/accent purposes where its contrast is sufficient
    (e.g., on the dark navy sections, 4.0:1 against large bold text).
 
-## 8. Known non-blockers / suggestions for a future pass
+## 8. Typography refinement pass (round 2)
+
+A follow-up pass reduced display typography sizes and standardized font
+weights across the page (hero, patient-quote sections, dark insight
+section, final close, and all supporting headings), per explicit request —
+no color, copy, structure, or image changes. Highlights:
+
+- Hero headline: `clamp(30px, 4.2vw, 68px)` (was `clamp(34px, 5vw, 64px)`),
+  weight 900, line-height 1.02.
+- "This treatment made me worse.": `clamp(30px, 3.2vw, 50px)`, weight 800.
+- Patient quotes (`.voice--a/b/c`): rebalanced to ~19–33px range with a
+  clear primary/secondary split, base weight 600 (700 for the accent quote).
+- "Knowing the treatment...": `clamp(30px, 3vw, 48px)`, weight 800,
+  max-width capped at 860px.
+- Dark navy section headline: `clamp(32px, 3.5vw, 52px)`, weight 800.
+- Introduced a 6-level weight scale: hero 900 → major statements 800 →
+  section headings/primary quotes 700 → supporting headings 600 →
+  body 400–500 → metadata 600. Applied consistently to `.section-heading`,
+  `.learn-item h3`, `.page-card__title`, `.author__name`, `.offer__title`,
+  `.faq-item summary`, `.eyebrow`, `.offer__payment`, `.final-close__book`.
+- Body copy nudged into the 16–17px comfort band where it had drifted
+  narrow (`.offer__benefits li`, `.faq-item p`, `.learn-item p` were 15–15.5px).
+- Price numerals (hero/offer/final-close/sticky) intentionally kept at
+  weight 900 — these read as a numeral callout, not a heading, and "do not
+  hide price" argues for keeping them visually strong.
+
+**Bug found and fixed during this pass:** the initial reduced hero
+floor (38px) still overflowed at 320px — the word "CONVERSATIONS" alone
+(no natural break point) is wider than the available 272px content width
+at that size. Measured actual glyph widths via a canvas probe at several
+sizes and confirmed 30px is the largest floor that fits without wrapping
+or clipping; the hero headline floor is set to 30px accordingly. Also
+found and reverted a `text-wrap: balance` rule on headlines that use
+manual `<br>` line breaks — combining the two caused a same-class overflow
+artifact, so `balance` is now only applied to the two headings that wrap
+naturally without manual breaks (`.recognition__lead`, `.section-heading`).
+
+Re-ran the full QA suite after this pass: all 10 widths (320–1920px) still
+show zero horizontal overflow and zero console errors, and Lighthouse
+returned **100/100/100/100** (Performance/Accessibility/Best
+Practices/SEO), CLS 0, LCP 1.8s.
+
+## 9. Known non-blockers / suggestions for a future pass
 
 - **Open Graph image is square (1254×1254)**, not the ideal 1200×630 landscape
   ratio some platforms prefer. It will still render (most platforms center-crop
