@@ -1,0 +1,10 @@
+(process.env as Record<string, string>).NODE_ENV = "test";
+process.env.APP_ENV = "test";
+process.env.DATABASE_URL = process.env.TEST_DATABASE_URL ?? "postgres://najditech:najditech@localhost:5432/najditech_test";
+process.env.APP_URL = "http://localhost:3000";
+process.env.APP_SECRET = "test-secret-0123456789-0123456789-0123456789";
+process.env.EMAIL_DRIVER = "log";
+process.env.PAYMENT_PROVIDERS = "mock,bank_transfer";
+process.env.MOCK_PAYMENT_WEBHOOK_SECRET = "whsec_test";
+process.env.NEXT_PUBLIC_LEGAL_ADDRESS = "Test Street 1, Istanbul";
+process.env.NEXT_PUBLIC_LEGAL_ENTITY_NAME = "Test Entity";

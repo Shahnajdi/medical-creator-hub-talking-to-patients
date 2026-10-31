@@ -37,8 +37,8 @@ export function track(name: string, properties: Record<string, string | number |
   const c = readConsent();
   if (!c?.analytics) return eventId;
   const body = JSON.stringify({ name, eventId, visitorId: c.id, path: location.pathname, properties, utm: readUtm() });
-  navigator.sendBeacon?.("/api/track", new Blob([body], { type: "application/json" })) ||
-    fetch("/api/track", { method: "POST", body, headers: { "Content-Type": "application/json" }, keepalive: true }).catch(() => {});
+  const sent = navigator.sendBeacon?.("/api/track", new Blob([body], { type: "application/json" }));
+  if (!sent) void fetch("/api/track", { method: "POST", body, headers: { "Content-Type": "application/json" }, keepalive: true }).catch(() => {});
   const w = window as unknown as { gtag?: (...a: unknown[]) => void; fbq?: (...a: unknown[]) => void };
   w.gtag?.("event", name, properties);
   if (c.marketing) w.fbq?.("trackCustom", name, properties, { eventID: eventId });

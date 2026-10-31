@@ -85,7 +85,7 @@ export async function exportPersonalData(rawEmail: string) {
     accounts: users,
     leads,
     companies,
-    consents: consents.map(({ ipHash: _ip, ...c }) => c),
+    consents: consents.map((c) => ({ ...c, ipHash: undefined })),
     activities,
     appointments,
     orders,

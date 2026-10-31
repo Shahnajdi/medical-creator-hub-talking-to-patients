@@ -6,10 +6,6 @@ import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { routing, dirOf } from "@/i18n/routing";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-import { CookieConsent } from "@/components/consent/CookieConsent";
-import { TrackerLoader } from "@/components/consent/TrackerLoader";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -44,13 +40,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
           <a href="#main" className="sr-only z-[60] rounded-lg bg-lime px-4 py-2 font-semibold text-ink focus:not-sr-only focus:fixed focus:start-4 focus:top-4">
             {t("skip")}
           </a>
-          <Header />
-          <main id="main" tabIndex={-1} className="outline-none">
-            {children}
-          </main>
-          <Footer />
-          <CookieConsent />
-          <TrackerLoader ga4Id={process.env.GA4_MEASUREMENT_ID || undefined} pixelId={process.env.META_PIXEL_ID || undefined} />
+          {children}
         </NextIntlClientProvider>
       </body>
     </html>

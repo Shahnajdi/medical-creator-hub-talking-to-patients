@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { readConsent, writeConsent } from "@/lib/tracking/consent-state";
@@ -12,34 +12,37 @@ import { readConsent, writeConsent } from "@/lib/tracking/consent-state";
  */
 export function CookieConsent() {
   const t = useTranslations("cookie");
-  const [open, setOpen] = useState(false);
+  // Whether a valid stored choice exists; the server snapshot hides the banner to avoid a hydration flash.
+  const hasChoice = useSyncExternalStore(subscribeConsent, () => readConsent() !== null, () => true);
   const [custom, setCustom] = useState(false);
   const [analytics, setAnalytics] = useState(false);
   const [marketing, setMarketing] = useState(false);
   const firstButton = useRef<HTMLButtonElement>(null);
+  // Only move focus when the user explicitly reopens the banner; never steal focus on page load.
+  const [reopened, setReopened] = useState(false);
 
   useEffect(() => {
-    if (!readConsent()) setOpen(true);
     const reopen = () => {
       const c = readConsent();
       setAnalytics(c?.analytics ?? false);
       setMarketing(c?.marketing ?? false);
       setCustom(true);
-      setOpen(true);
+      setReopened(true);
     };
     window.addEventListener("nt:open-consent", reopen);
     return () => window.removeEventListener("nt:open-consent", reopen);
   }, []);
+  const open = !hasChoice || reopened;
 
   useEffect(() => {
-    if (open) firstButton.current?.focus({ preventScroll: true });
-  }, [open, custom]);
+    if (reopened) firstButton.current?.focus({ preventScroll: true });
+  }, [reopened]);
 
   if (!open) return null;
   const gpc = typeof navigator !== "undefined" && (navigator as { globalPrivacyControl?: boolean }).globalPrivacyControl === true;
   const decide = (a: boolean, m: boolean) => {
     writeConsent(a, gpc ? false : m);
-    setOpen(false);
+    setReopened(false);
   };
 
   return (
@@ -94,6 +97,11 @@ export function CookieConsent() {
       </div>
     </section>
   );
+}
+
+function subscribeConsent(cb: () => void) {
+  window.addEventListener("nt:consent", cb);
+  return () => window.removeEventListener("nt:consent", cb);
 }
 
 export function CookieSettingsButton({ label }: { label: string }) {

@@ -1,0 +1,44 @@
+# Legal and privacy compliance checklist
+
+**Important:** software can't make a business legally compliant on its own, and this document isn't legal advice. The platform implements technical controls. Some items are business or legal actions only you (with a qualified lawyer, ideally one familiar with Turkish KVKK, EU/UK GDPR, and consumer law in your main markets) can complete. `npm run check:launch` blocks a production launch until the key ones are recorded.
+
+Legend: ✅ implemented in code · 🟡 implemented, needs your input/confirmation · ⛔ business/legal action required (code can't do it)
+
+| Request | Status | Details |
+| --- | --- | --- |
+| Privacy policy | 🟡 | `/privacy` (fa/en). Describes the data the code actually collects, purposes and legal bases, retention (read live from settings), recipients, transfers, rights, children, AI. **Lawyer review required** (`LEGAL_REVIEW_COMPLETED`) |
+| Terms of service | 🟡 | `/terms`. Governing law is set to Türkiye with mandatory consumer protections preserved; **confirm with your lawyer** |
+| Cookie banner | ✅ | Equal-weight "Reject all" / "Accept all", granular settings, nothing pre-ticked, re-asked when the policy version changes or after 6 months, reopenable from the footer, honours Global Privacy Control, choice recorded as proof |
+| Block trackers until consent | ✅ | GA4/Meta Pixel are not even requested before opt-in (e2e-tested); withdrawal reloads the page to unload them; trackers are never mounted in /admin; first-party analytics also wait for consent |
+| Unsubscribe in marketing emails | ✅ | Visible link in every marketing email, RFC 8058 one-click `List-Unsubscribe` headers, one-click confirmation page (GET doesn't unsubscribe, so link scanners can't trigger it), pending marketing jobs cancelled, permanent suppression hash |
+| Separate marketing consent | ✅ | Optional, unticked, per channel (email / WhatsApp), separate from terms acceptance; recorded with version, time and hashed IP |
+| Checkbox to accept privacy policy and terms | ✅ | Required on every form, registration and checkout. Wording: "I have read the Privacy Policy and accept the Terms" (a privacy notice is acknowledged, not "consented to", which is the GDPR-correct framing) |
+| Record acceptance of the terms | ✅ | `consent_records` (purpose `terms`, document version, source e.g. `form:free-audit` / `checkout:<order>`, time, hashed IP, user agent); orders also store `terms_version` |
+| Data retention limits | 🟡 | Automatic daily purge (`runRetention`): inactive leads 730 d, tracking 395 d, audit logs 730 d, message log 395 d, unverified privacy requests 7 d, sessions/tokens on expiry. Orders/invoices kept for tax law. **Confirm periods with your lawyer/accountant**; values are DB settings |
+| Data access and deletion requests | ✅ | `/privacy-request` with email verification and a 30-day due date; admin export (JSON) and erasure; self-service export and deletion in `/dashboard/profile`; erasure audited |
+| Stop collecting unnecessary data | ✅ | Only fields needed to respond/qualify; email **or** WhatsApp (not both); no date of birth (age is an attestation); no raw IPs (keyed hash); no card data; no sensitive categories |
+| Parental consent for children's data | ✅ (by design) | The services aren't directed to children. All forms, accounts and checkout require confirming age 18+; data from minors is deleted on request. **This means no children's data is collected, so no parental-consent flow is needed.** If you ever offer services to under-18s, a verifiable parental-consent flow (COPPA/GDPR Art. 8) must be built first |
+| Refund policy | 🟡 | `/refund-policy`. Each product's refund window (default 14 days) is shown at checkout before payment. **Confirm the commercial terms** (and the EU digital-content withdrawal rules with your lawyer) |
+| Easy subscription cancellation | ✅ | One-click "Cancel subscription" in `/dashboard/billing`, no retention maze, effective at period end, audited |
+| Disclose auto-renewals | ✅ | Recurring products show interval, amount and cancellation method before payment, and require a separate "I understand this renews automatically" checkbox; the billing page shows the next renewal date |
+| No hidden fees | ✅ | Price from DB with tax-inclusive/exclusive statement, "we add no other fees", total on the pay button; bank-transfer fees disclosed in the refund policy |
+| Remove fake countdown timers | ✅ | None exist; there are no urgency or scarcity elements anywhere |
+| Remove dark patterns | ✅ | Equal-weight consent buttons, unticked optional boxes, no confirmshaming, no pre-selected upsells, honest error messages (failed submissions never show success), cancellation as easy as purchase |
+| Remove fake reviews | ✅ | No reviews or testimonials are hardcoded. Testimonials only render when `permission_status = granted` (with evidence) and published; otherwise the section is hidden |
+| Remove unsupported claims | ✅ / 🟡 | No statistics, client counts, "#1", guarantees or income claims. Copy states results and income are **not** guaranteed. Remaining statements to **confirm are true for your business**: "fees confirmed in writing before work starts", "support in Persian and English", "we never sell your data" |
+| Remove false SOC 2 claims | ✅ | No SOC 2, ISO, GDPR-certified or "100% secure" claims anywhere |
+| Customer logos without permission | ✅ | No logos are displayed. Case studies require `client_permission = true`; the copyright page states the logo policy |
+| Verify image, font and code licences | ✅ / 🟡 | Fonts: Vazirmatn and Inter, OFL-1.1, self-hosted. Icons: Lucide (ISC). No stock images (the founder portrait is a labelled placeholder). `npm run licenses` audits all production dependencies (all permissive; LGPL libvips via `sharp` noted). `media_assets` requires `license` and `source` for every future upload. **You:** keep proof of licence for photos/videos you add |
+| Open-source licence obligations | ✅ | For a hosted (not distributed) app, MIT/Apache/BSD/ISC/OFL obligations are satisfied by keeping notices in `node_modules`. If you ever **distribute** the software, include `THIRD-PARTY-NOTICES` (generate with `npx license-checker --production`) |
+| Label AI-generated content | ✅ | `blog_posts.ai_assisted` shows a visible "Created with AI assistance and reviewed by a human" badge; `media_assets.ai_generated` and `messages.ai_generated` flags exist; `/ai-disclosure` page |
+| Prevent AI training on user data | ✅ / ⛔ | Policy statement in the privacy and AI pages; no data is sent to any AI service (the AI module isn't enabled). **You:** if you enable AI, use a provider/plan whose terms exclude training on API data (Anthropic's commercial API doesn't train on API inputs by default) and record it in the DPA register |
+| Audit third-party SDKs, analytics, tracking | ✅ | See [third-party-audit.md](third-party-audit.md) |
+| Data processing agreements | ⛔ | Sign DPAs with every active vendor. Tracked in [dpa-register.md](dpa-register.md); `check:launch` fails while any row is PENDING |
+| Publish a subprocessors list | ✅ | `/subprocessors` is generated from live configuration, so it never lists inactive vendors or omits active ones |
+| Realistic uptime commitments | ✅ | Terms: no guarantee of uninterrupted service; no SLA unless agreed in writing |
+| Business contact details | 🟡 | Footer, `/contact`, `/imprint`, emails. Values come from `NEXT_PUBLIC_LEGAL_*`; until set, pages show a red "not yet provided" marker instead of invented details. Marketing emails are **blocked** until a postal address is set |
+| DMCA registration requirements | ⛔ | `/copyright` has a takedown procedure. The DMCA safe harbour (17 U.S.C. §512) only applies if you **designate an agent with the U.S. Copyright Office** (online, small fee, renew every 3 years). That's only relevant if you host user-uploaded content and want U.S. safe harbour. Currently users can't upload content, so it's optional. Set `NEXT_PUBLIC_DMCA_AGENT` if you register |
+| Colour contrast | ✅ | Every text/background token pair is unit-tested ≥ 4.5:1 (WCAG AA) |
+| Alt text | ✅ | No `<img>` without alt (e2e-checked); decorative icons are `aria-hidden`; the portrait placeholder has a descriptive label; `media_assets` requires fa and en alt text |
+| Keyboard navigation | ✅ | Skip link (first tab stop, e2e-tested), visible focus rings, native controls, Escape closes the mobile menu, keyboard-operable kanban (stage select on every card), labelled fields with `aria-invalid` and `aria-describedby`, focus moves to the first error |
+| Iran-resident customers | ✅ | Checkout is not offered where the eligibility setting blocks it (default: IR); an honest "contact us" message is shown instead. No crypto or informal routes. **Confirm the list with your PSP and lawyer** (sanctions rules) |
